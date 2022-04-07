@@ -1,0 +1,37 @@
+{
+  "version": "4.8.3",
+  "name": "dbgate-query-splitter",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "description": "SQL Query splitter for verious database engines",
+  "homepage": "https://dbgate.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dbgate/dbgate-query-spliiter"
+  },
+  "author": "Jan Prochazka",
+  "license": "MIT",
+  "keywords": [
+    "SQL",
+    "query",
+    "split",
+    "parse"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc --watch",
+    "test": "jest",
+    "test:ci": "jest --json --outputFile=result.json --testLocationInResults",
+    "postinstall": "yarn build"
+  },
+  "files": [
+    "lib"
+  ],
+  "devDependencies": {
+    "@types/jest": "^25.1.4",
+    "@types/node": "^13.7.0",
+    "jest": "^24.9.0",
+    "ts-jest": "^25.2.1",
+    "typescript": "^4.4.3"
+  }
+}
