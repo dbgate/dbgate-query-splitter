@@ -1,0 +1,32 @@
+name: Run tests
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  test-runner:
+    runs-on: ubuntu-latest
+    container: node:14.18
+
+    steps:
+      - name: Context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: yarn install
+        run: |
+          yarn install
+      - name: Run tests
+        run: |
+          cd integration-tests
+          yarn test
+      - uses: tanmen/jest-reporter@v1
+        if: always()
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          result-file: result.json
+          action-name: Run tests
