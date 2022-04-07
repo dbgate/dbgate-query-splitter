@@ -22,7 +22,7 @@ jobs:
           yarn install
       - name: Run tests
         run: |
-          yarn test
+          yarn test:ci
       - uses: tanmen/jest-reporter@v1
         if: always()
         with:
