@@ -22,7 +22,6 @@ jobs:
           yarn install
       - name: Run tests
         run: |
-          cd integration-tests
           yarn test
       - uses: tanmen/jest-reporter@v1
         if: always()
