@@ -22,7 +22,7 @@
     "start": "tsc --watch",
     "test": "jest",
     "test:ci": "jest --json --outputFile=result.json --testLocationInResults",
-    "postinstall": "yarn build"
+    "prepare": "yarn build"
   },
   "files": [
     "lib"
