@@ -1,5 +1,5 @@
 {
-  "version": "4.8.4",
+  "version": "4.9.0-alpha.1",
   "name": "dbgate-query-splitter",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
