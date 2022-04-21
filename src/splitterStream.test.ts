@@ -97,3 +97,12 @@ test("splitted delimiter stream test", async () => {
   );
   expect(output).toEqual(["SELECT\n1", "SELECT\n2; SELECT\n3;"]);
 });
+
+test("northwind test", async () => {
+  console.log(process.cwd());
+  const fileStream = fs.createReadStream("sql/northwind.sql", "utf-8");
+  const output = await streamToArray(
+    splitQueryStream(fileStream, mysqlSplitterOptions)
+  );
+  expect(output['length']).toEqual(29);
+});
