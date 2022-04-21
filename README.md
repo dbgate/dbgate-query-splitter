@@ -14,27 +14,72 @@ Supports following SQL dialects:
 ## Usage
 
 ```js
-import { splitQuery, mysqlSplitterOptions, mssqlSplitterOptions, postgreSplitterOptions } from 'dbgate-query-splitter';
+import {
+  splitQuery,
+  mysqlSplitterOptions,
+  mssqlSplitterOptions,
+  postgreSplitterOptions,
+} from "dbgate-query-splitter";
 
-const output = splitQuery('SELECT * FROM `table1`;SELECT * FROM `table2`;', mysqlSplitterOptions);
+const output = splitQuery(
+  "SELECT * FROM `table1`;SELECT * FROM `table2`;",
+  mysqlSplitterOptions
+);
 
 // output is ['SELECT * FROM `table1`', 'SELECT * FROM `table2`']
 ```
 
 ## Streaming support in nodejs
-Function splitQueryStream accepts input stream and query options. Result is object stream, each object for one splitted query.
-Tokens must not be divided into more input chunks. This can be accomplished eg. when input stream emits one chunk per line (eg. using byline module)
+
+Function splitQueryStream accepts input stream and query options. Result is object stream, each object for one splitted query. From version 4.9.0, piping byline stream is not required.
 
 ```js
-const { mysqlSplitterOptions, mssqlSplitterOptions, postgreSplitterOptions } = require('dbgate-query-splitter');
-const { splitQueryStream } = require('dbgate-query-splitter/lib/splitQueryStream');
-const fs = require('fs');
-const byline = require('byline');
+const {
+  mysqlSplitterOptions,
+  mssqlSplitterOptions,
+  postgreSplitterOptions,
+} = require("dbgate-query-splitter");
+const {
+  splitQueryStream,
+} = require("dbgate-query-splitter/lib/splitQueryStream");
+const fs = require("fs");
 
-const fileStream = fs.createReadStream('INPUT_FILE_NAME', 'utf-8');
-const lineStream = byline(fileStream);
-const splittedStream = splitQueryStream(lineStream, mysqlSplitterOptions);
+const fileStream = fs.createReadStream("INPUT_FILE_NAME", "utf-8");
+const splittedStream = splitQueryStream(fileStream, mysqlSplitterOptions);
+```
 
+## Return rich info
+
+By default, string array is returned. However, if you need to return row/column number information for splitted commands, use returnRichInfo option:
+
+```js
+import { splitQuery, mysqlSplitterOptions } from "dbgate-query-splitter";
+
+const output = splitQuery("SELECT * FROM `table1`;SELECT * FROM `table2`;", {
+  ...mysqlSplitterOptions,
+  returnRichInfo: true,
+});
+
+```
+
+Output is:
+```js
+[
+    {
+        text: 'SELECT * FROM `table1`',
+        start: { position: 0, line: 0, column: 0 },
+        end: { position: 22, line: 0, column: 22 },
+        trimStart: { position: 0, line: 0, column: 0 },
+        trimEnd: { position: 22, line: 0, column: 22 }
+    },
+    {
+        text: 'SELECT * FROM `table2`',
+        start: { position: 23, line: 0, column: 23 },
+        end: { position: 46, line: 1, column: 22 },
+        trimStart: { position: 24, line: 1, column: 0 },
+        trimEnd: { position: 46, line: 1, column: 22 }
+    }
+]
 ```
 
 ## Contributing

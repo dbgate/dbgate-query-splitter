@@ -1,20 +1,21 @@
-import stream from 'stream';
+import stream from "stream";
 import {
   SplitStreamContext,
   getInitialDelimiter,
   SplitLineContext,
   splitQueryLine,
   finishSplitStream,
-} from './splitQuery';
-import { SplitterOptions } from './options';
+} from "./splitQuery";
+import { SplitterOptions } from "./options";
 
 export class SplitQueryStream extends stream.Transform {
   context: SplitStreamContext;
+  lineBuffer: string;
 
   constructor(options: SplitterOptions) {
     super({ objectMode: true });
     this.context = {
-      commandPart: '',
+      commandPart: "",
       commandStartLine: 0,
       commandStartColumn: 0,
       commandStartPosition: 0,
@@ -23,23 +24,39 @@ export class SplitQueryStream extends stream.Transform {
       column: 0,
       options,
       currentDelimiter: getInitialDelimiter(options),
-      pushOutput: cmd => this.push(cmd),
+      pushOutput: (cmd) => this.push(cmd),
     };
+    this.lineBuffer = "";
   }
-  _transform(chunk, encoding, done) {
+
+  flushBuffer() {
     const lineContext: SplitLineContext = {
       ...this.context,
       position: 0,
       currentCommandStart: 0,
       wasDataOnLine: false,
-      source: chunk,
-      end: chunk.length,
+      source: this.lineBuffer,
+      end: this.lineBuffer.length,
     };
     splitQueryLine(lineContext);
     this.context.commandPart = lineContext.commandPart;
+    this.context.currentDelimiter = lineContext.currentDelimiter;
+    this.lineBuffer = "";
+  }
+
+  _transform(chunk, encoding, done) {
+    for (let i = 0; i < chunk.length; i += 1) {
+      const ch = chunk[i];
+      this.lineBuffer += ch;
+      if (ch == "\n") {
+        this.flushBuffer();
+      }
+    }
+
     done();
   }
   _flush(done) {
+    this.flushBuffer();
     finishSplitStream(this.context);
     done();
   }

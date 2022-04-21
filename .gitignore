@@ -1,4 +1,5 @@
 lib
+testdata.sql
 
 # Logs
 logs
