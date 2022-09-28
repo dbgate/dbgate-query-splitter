@@ -256,14 +256,18 @@ function containsDataAfterDelimiterOnLine(context: ScannerContext, delimiter: To
     }
 
     switch (token.type) {
-      case 'data':
-        return true;
+      case 'whitespace':
+        cloned.position += token.length;
+        continue;
       case 'eoln':
         return false;
       case 'comment':
         if (token.value?.includes('\n')) return true;
+        cloned.position += token.length;
+        continue;
+      default:
+        return true;
     }
-    cloned.position += token.length;
   }
 }
 

@@ -11,6 +11,8 @@ export interface SplitterOptions {
   doubleDashComments: boolean;
   multilineComments: boolean;
   javaScriptComments: boolean;
+  // // comments willl be not part of output
+  // ignoreComments: boolean;
   // if more commands are on single line, they are not splitted
   preventSingleLineSplit: boolean;
   // overrides allowSemicolon, allowGoDelimiter setting. splits by semicolon, after CREATE PROCEDURE, CREATE FUNCTION, GO separator is required
@@ -39,6 +41,7 @@ export const defaultSplitterOptions: SplitterOptions = {
   splitByLines: false,
   preventSingleLineSplit: false,
   adaptiveGoSplit: false,
+  // ignoreComments: false,
 };
 
 export const mysqlSplitterOptions: SplitterOptions = {
