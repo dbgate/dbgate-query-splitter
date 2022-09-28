@@ -65,6 +65,15 @@ test('prevent single line split - mysql with comments', () => {
   expect(output).toEqual(['SELECT 1', '-- comm 1\nSELECT 2']);
 });
 
+test('prevent single line split - mysql with comments ignored', () => {
+  const output = splitQuery('SELECT 1; -- comm 1\nSELECT 2', {
+    ...mysqlSplitterOptions,
+    preventSingleLineSplit: true,
+    ignoreComments: true,
+  });
+  expect(output).toEqual(['SELECT 1', 'SELECT 2']);
+});
+
 test('adaptive go split -mssql', () => {
   const output = splitQuery('SELECT 1;CREATE PROCEDURE p1 AS BEGIN SELECT 2;SELECT 3;END\nGO\nSELECT 4;SELECT 5', {
     ...mssqlSplitterOptions,
