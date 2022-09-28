@@ -49,6 +49,14 @@ test('semicolon inside identyifier - mssql', () => {
   expect(output).toEqual(input);
 });
 
+test('prevent single line split - mysql', () => {
+  const output = splitQuery('SELECT * FROM `table1`;SELECT * FROM `table2`;\nSELECT * FROM `table3`', {
+    ...mysqlSplitterOptions,
+    preventSingleLineSplit: true,
+  });
+  expect(output).toEqual(['SELECT * FROM `table1`;SELECT * FROM `table2`', 'SELECT * FROM `table3`']);
+});
+
 test('delimiter test', () => {
   const input = 'SELECT 1;\n DELIMITER $$\n SELECT 2; SELECT 3; \n DELIMITER ;';
   const output = splitQuery(input, mysqlSplitterOptions);

@@ -17,6 +17,15 @@ export interface SplitStreamContext {
   commandStartColumn: number;
 }
 
+interface ScannerContext {
+  readonly options: SplitterOptions;
+  readonly source: string;
+  readonly position: number;
+  readonly currentDelimiter: string;
+  readonly end: number;
+  readonly wasDataOnLine: boolean;
+}
+
 export interface SplitLineContext extends SplitStreamContext {
   source: string;
   position: number;
@@ -99,7 +108,7 @@ const DATA_TOKEN: Token = {
   length: 1,
 };
 
-function scanDollarQuotedString(context: SplitLineContext): Token {
+function scanDollarQuotedString(context: ScannerContext): Token {
   if (!context.options.allowDollarDollarString) return null;
 
   let pos = context.position;
@@ -123,7 +132,7 @@ function scanDollarQuotedString(context: SplitLineContext): Token {
   return null;
 }
 
-function scanToken(context: SplitLineContext): Token {
+function scanToken(context: ScannerContext): Token {
   let pos = context.position;
   const s = context.source;
   const ch = s[pos];
@@ -205,6 +214,38 @@ function scanToken(context: SplitLineContext): Token {
   if (dollarString) return dollarString;
 
   return DATA_TOKEN;
+}
+
+function containsDataAfterDelimiterOnLine(context: ScannerContext, delimiter: Token): boolean {
+  const cloned = {
+    options: context.options,
+    source: context.source,
+    position: context.position,
+    currentDelimiter: context.currentDelimiter,
+    end: context.end,
+    wasDataOnLine: context.wasDataOnLine,
+  };
+
+  cloned.position += delimiter.length;
+
+  while (cloned.position < cloned.end) {
+    const token = scanToken(cloned);
+
+    if (!token) {
+      cloned.position += 1;
+      continue;
+    }
+
+    switch (token.type) {
+      case 'data':
+        return true;
+      case 'eoln':
+        return false;
+      case 'comment':
+        if (token.value?.includes('\n')) return true;
+    }
+    cloned.position += token.length;
+  }
 }
 
 function pushQuery(context: SplitLineContext) {
@@ -332,6 +373,11 @@ export function splitQueryLine(context: SplitLineContext) {
         markStartCommand(context);
         break;
       case 'delimiter':
+        if (context.options.preventSingleLineSplit && containsDataAfterDelimiterOnLine(context, token)) {
+          movePosition(context, token.length);
+          context.wasDataOnLine = true;
+          break;
+        }
         pushQuery(context);
         context.commandPart = '';
         movePosition(context, token.length);
