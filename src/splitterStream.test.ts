@@ -37,7 +37,6 @@ test('stream: 2 queries on more buffers', async () => {
       mysqlSplitterOptions
     )
   );
-  // console.log('OUT', output);
   expect(output).toEqual(['SELECT * FROM `table1`', 'SELECT * FROM `table2`']);
 });
 

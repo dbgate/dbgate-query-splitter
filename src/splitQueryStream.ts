@@ -53,6 +53,10 @@ export class SplitQueryStream extends stream.Transform {
       line: this.context.line,
       column: this.context.column,
 
+      commandStartPosition: this.context.commandStartPosition,
+      commandStartLine: this.context.commandStartLine,
+      commandStartColumn: this.context.commandStartColumn,
+
       noWhitePosition: this.context.noWhitePosition,
       noWhiteLine: this.context.noWhiteLine,
       noWhiteColumn: this.context.noWhiteColumn,
@@ -64,7 +68,6 @@ export class SplitQueryStream extends stream.Transform {
       wasDataInCommand: this.context.wasDataInCommand,
     };
 
-    // console.log('RUNNING SPLIT ON:', this.lineBuffer)
     splitQueryLine(lineContext);
 
     this.context.commandPart = lineContext.commandPart;
@@ -73,6 +76,10 @@ export class SplitQueryStream extends stream.Transform {
     this.context.streamPosition = lineContext.streamPosition;
     this.context.line = lineContext.line;
     this.context.column = lineContext.column;
+
+    this.context.commandStartPosition = lineContext.commandStartPosition;
+    this.context.commandStartLine = lineContext.commandStartLine;
+    this.context.commandStartColumn = lineContext.commandStartColumn;
 
     this.context.noWhitePosition = lineContext.noWhitePosition;
     this.context.noWhiteLine = lineContext.noWhiteLine;

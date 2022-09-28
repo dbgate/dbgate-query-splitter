@@ -294,12 +294,17 @@ function containsDataAfterDelimiterOnLine(context: ScannerContext, delimiter: To
 }
 
 function pushQuery(context: SplitLineContext) {
-  const sql = (context.commandPart || '') + context.source.slice(context.currentCommandStart, context.position);
-  const trimmed = sql.substring(
+  context.commandPart += context.source.slice(context.currentCommandStart, context.position);
+  pushCurrentQueryPart(context);
+}
+
+function pushCurrentQueryPart(context: SplitStreamContext) {
+  const trimmed = context.commandPart.substring(
     context.trimCommandStartPosition - context.commandStartPosition,
-    context.noWhitePosition + 1
+    context.noWhitePosition - context.commandStartPosition
   );
-  if (trimmed) {
+
+  if (trimmed.trim()) {
     if (context.options.returnRichInfo) {
       context.pushOutput({
         text: trimmed,
@@ -333,28 +338,6 @@ function pushQuery(context: SplitLineContext) {
     }
   }
 }
-
-// function countTrimmedPositions(full: string, positions: SplitResultItemRich): SplitResultItemRich {
-//   const startIndex = full.indexOf(positions.text);
-
-//   const trimStart = { ...positions.start };
-//   for (let i = 0; i < startIndex; i += 1) {
-//     if (full[i] == '\n') {
-//       trimStart.position += 1;
-//       trimStart.line += 1;
-//       trimStart.column = 0;
-//     } else {
-//       trimStart.position += 1;
-//       trimStart.column += 1;
-//     }
-//   }
-
-//   return {
-//     ...positions,
-//     trimStart,
-//     trimEnd: positions.end,
-//   };
-// }
 
 function markStartCommand(context: SplitLineContext) {
   context.commandStartPosition = context.streamPosition;
@@ -469,44 +452,7 @@ export function getInitialDelimiter(options: SplitterOptions) {
 }
 
 export function finishSplitStream(context: SplitStreamContext) {
-  const trimmed = context.commandPart.substring(
-    context.trimCommandStartPosition - context.commandStartPosition,
-    context.noWhitePosition + 1
-  );
-
-  if (trimmed) {
-    if (context.options.returnRichInfo) {
-      context.pushOutput({
-        text: trimmed,
-
-        start: {
-          position: context.commandStartPosition,
-          line: context.commandStartLine,
-          column: context.commandStartColumn,
-        },
-
-        end: {
-          position: context.streamPosition,
-          line: context.line,
-          column: context.column,
-        },
-
-        trimStart: {
-          position: context.trimCommandStartPosition,
-          line: context.trimCommandStartLine,
-          column: context.trimCommandStartColumn,
-        },
-
-        trimEnd: {
-          position: context.noWhitePosition,
-          line: context.noWhiteLine,
-          column: context.noWhiteColumn,
-        },
-      });
-    } else {
-      context.pushOutput(trimmed);
-    }
-  }
+  pushCurrentQueryPart(context);
 }
 
 export function splitQuery(sql: string, options: SplitterOptions = null): SplitResultItem[] {
