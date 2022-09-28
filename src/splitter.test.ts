@@ -57,6 +57,14 @@ test('prevent single line split - mysql', () => {
   expect(output).toEqual(['SELECT * FROM `table1`;SELECT * FROM `table2`', 'SELECT * FROM `table3`']);
 });
 
+test('adaptive go split -mssql', () => {
+  const output = splitQuery('SELECT 1;CREATE PROCEDURE p1 AS BEGIN SELECT 2;SELECT 3;END\nGO\nSELECT 4;SELECT 5', {
+    ...mssqlSplitterOptions,
+    adaptiveGoSplit: true,
+  });
+  expect(output).toEqual(['SELECT 1', 'CREATE PROCEDURE p1 AS BEGIN SELECT 2;SELECT 3;END', 'SELECT 4', 'SELECT 5']);
+});
+
 test('delimiter test', () => {
   const input = 'SELECT 1;\n DELIMITER $$\n SELECT 2; SELECT 3; \n DELIMITER ;';
   const output = splitQuery(input, mysqlSplitterOptions);

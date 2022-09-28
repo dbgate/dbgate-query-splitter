@@ -13,8 +13,8 @@ export interface SplitterOptions {
   javaScriptComments: boolean;
   // if more commands are on single line, they are not splitted
   preventSingleLineSplit: boolean;
-  // // overrides allowSemicolon, allowGoDelimiter and allowCustomDelimiter setting. splits by semicolon, after CREATE PROCEDURE, CREATE FUNCTION, GO separator is required
-  // adaptiveGoSplit: boolean;
+  // overrides allowSemicolon, allowGoDelimiter setting. splits by semicolon, after CREATE PROCEDURE, CREATE FUNCTION, GO separator is required
+  adaptiveGoSplit: boolean;
 
   returnRichInfo: boolean;
   splitByLines: boolean;
@@ -38,7 +38,7 @@ export const defaultSplitterOptions: SplitterOptions = {
   returnRichInfo: false,
   splitByLines: false,
   preventSingleLineSplit: false,
-  // adaptiveGoSplit: false,
+  adaptiveGoSplit: false,
 };
 
 export const mysqlSplitterOptions: SplitterOptions = {

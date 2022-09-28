@@ -90,7 +90,16 @@ function isStringEnd(s: string, pos: number, endch: string, escapech: string) {
 }
 
 interface Token {
-  type: 'string' | 'delimiter' | 'whitespace' | 'eoln' | 'data' | 'set_delimiter' | 'comment' | 'go_delimiter';
+  type:
+    | 'string'
+    | 'delimiter'
+    | 'whitespace'
+    | 'eoln'
+    | 'data'
+    | 'set_delimiter'
+    | 'comment'
+    | 'go_delimiter'
+    | 'create_routine';
   length: number;
   value?: string;
 }
@@ -200,11 +209,21 @@ function scanToken(context: ScannerContext): Token {
     }
   }
 
-  if (context.options.allowGoDelimiter && !context.wasDataOnLine) {
+  if ((context.options.allowGoDelimiter || context.options.adaptiveGoSplit) && !context.wasDataOnLine) {
     const m = s.slice(pos).match(/^GO[\t\r ]*(\n|$)/i);
     if (m) {
       return {
         type: 'go_delimiter',
+        length: m[0].length - 1,
+      };
+    }
+  }
+
+  if (context.options.adaptiveGoSplit) {
+    const m = s.slice(pos).match(/^CREATE\s*(PROCEDURE|FUNCTION|TRIGGER)/i);
+    if (m) {
+      return {
+        type: 'create_routine',
         length: m[0].length - 1,
       };
     }
@@ -371,6 +390,15 @@ export function splitQueryLine(context: SplitLineContext) {
         movePosition(context, token.length);
         context.currentCommandStart = context.position;
         markStartCommand(context);
+        if (context.options.adaptiveGoSplit) {
+          context.currentDelimiter = SEMICOLON;
+        }
+        break;
+      case 'create_routine':
+        movePosition(context, token.length);
+        if (context.options.adaptiveGoSplit) {
+          context.currentDelimiter = null;
+        }
         break;
       case 'delimiter':
         if (context.options.preventSingleLineSplit && containsDataAfterDelimiterOnLine(context, token)) {
@@ -393,6 +421,7 @@ export function splitQueryLine(context: SplitLineContext) {
 }
 
 export function getInitialDelimiter(options: SplitterOptions) {
+  if (options?.adaptiveGoSplit) return SEMICOLON;
   return options?.allowSemicolon === false ? null : SEMICOLON;
 }
 
