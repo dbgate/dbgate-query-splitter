@@ -242,7 +242,7 @@ function scanToken(context: ScannerContext): Token {
   }
 
   if (context.options.adaptiveGoSplit) {
-    const m = s.slice(pos).match(/^CREATE\s*(PROCEDURE|FUNCTION|TRIGGER)/i);
+    const m = s.slice(pos).match(/^(CREATE|ALTER)\s*(PROCEDURE|FUNCTION|TRIGGER)/i);
     if (m) {
       return {
         type: 'create_routine',

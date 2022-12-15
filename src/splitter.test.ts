@@ -75,11 +75,20 @@ test('prevent single line split - mysql with comments ignored', () => {
 });
 
 test('adaptive go split -mssql', () => {
-  const output = splitQuery('SELECT 1;CREATE PROCEDURE p1 AS BEGIN SELECT 2;SELECT 3;END\nGO\nSELECT 4;SELECT 5', {
-    ...mssqlSplitterOptions,
-    adaptiveGoSplit: true,
-  });
-  expect(output).toEqual(['SELECT 1', 'CREATE PROCEDURE p1 AS BEGIN SELECT 2;SELECT 3;END', 'SELECT 4', 'SELECT 5']);
+  const output = splitQuery(
+    'SELECT 1;CREATE PROCEDURE p1 AS BEGIN SELECT 2;SELECT 3;END\nGO\nSELECT 4;SELECT 5;ALTER PROCEDURE p1 AS BEGIN SELECT 2;SELECT 3;END',
+    {
+      ...mssqlSplitterOptions,
+      adaptiveGoSplit: true,
+    }
+  );
+  expect(output).toEqual([
+    'SELECT 1',
+    'CREATE PROCEDURE p1 AS BEGIN SELECT 2;SELECT 3;END',
+    'SELECT 4',
+    'SELECT 5',
+    'ALTER PROCEDURE p1 AS BEGIN SELECT 2;SELECT 3;END',
+  ]);
 });
 
 test('delimiter test', () => {
