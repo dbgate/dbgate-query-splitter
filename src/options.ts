@@ -5,7 +5,9 @@ export interface SplitterOptions {
 
   allowSemicolon: boolean;
   allowCustomDelimiter: boolean;
+  allowCustomSqlTerminator: boolean;
   allowGoDelimiter: boolean;
+  allowSlashDelimiter: boolean;
   allowDollarDollarString: boolean;
   noSplit: boolean;
   doubleDashComments: boolean;
@@ -29,7 +31,9 @@ export const defaultSplitterOptions: SplitterOptions = {
 
   allowSemicolon: true,
   allowCustomDelimiter: false,
+  allowCustomSqlTerminator: false,
   allowGoDelimiter: false,
+  allowSlashDelimiter: false,
   allowDollarDollarString: false,
   noSplit: false,
 
@@ -99,4 +103,15 @@ export const redisSplitterOptions: SplitterOptions = {
   ...defaultSplitterOptions,
 
   splitByLines: true,
+};
+
+export const oracleSplitterOptions: SplitterOptions = {
+  ...defaultSplitterOptions,
+
+  allowCustomSqlTerminator: true,
+  allowSlashDelimiter: true,
+
+  stringsBegins: ["'", '"'],
+  stringsEnds: { "'": "'", '"': '"' },
+  stringEscapes: { "'": "'", '"': '"' },
 };

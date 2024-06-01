@@ -5,6 +5,7 @@ import {
   mongoSplitterOptions,
   noSplitSplitterOptions,
   redisSplitterOptions,
+  oracleSplitterOptions,
 } from './options';
 import { splitQuery } from './splitQuery';
 
@@ -223,4 +224,28 @@ test('count lines with flush', () => {
       }),
     ])
   );
+});
+
+test('shash delimiter', () => {
+  const input = 'SELECT 1\n/\nSELECT 2\n';
+  const output = splitQuery(input, oracleSplitterOptions);
+  expect(output).toEqual(['SELECT 1', 'SELECT 2']);
+});
+
+test('go delimiter on the end', () => {
+  const input = 'SELECT 1\nGO';
+  const output = splitQuery(input, mssqlSplitterOptions);
+  expect(output).toEqual(['SELECT 1']);
+});
+
+test('oracle procedure', () => {
+  const input = 'SET SQLT OFF\nCREATE PROC1\nSELECT 1;\nEND\n/';
+  const output = splitQuery(input, oracleSplitterOptions);
+  expect(output).toEqual(['CREATE PROC1\nSELECT 1;\nEND']);
+});
+
+test('oracle custom terminator', () => {
+  const input = 'SET SQLTERMINATOR "%"\nSELECT 1%\nSELECT 2';
+  const output = splitQuery(input, oracleSplitterOptions);
+  expect(output).toEqual(['SELECT 1', 'SELECT 2']);
 });

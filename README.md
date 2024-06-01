@@ -10,6 +10,7 @@ Supports following SQL dialects:
 - PostgreSQL
 - SQLite
 - Microsoft SQL Server
+- Oracle
 
 ## Usage
 
@@ -96,3 +97,5 @@ yarn test
 - Dollar strings (PostgreSQL)
 - GO separators (MS SQL)
 - Custom delimiter, setby DELIMITER keyword (MySQL)
+- Slash separator (Oracle)
+- SET SQLTERMINATOR (Oracle)

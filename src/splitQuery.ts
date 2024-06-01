@@ -118,7 +118,9 @@ interface Token {
     | 'whitespace'
     | 'eoln'
     | 'data'
+    | 'slash_delimiter'
     | 'set_delimiter'
+    | 'set_sqlterminator'
     | 'comment'
     | 'go_delimiter'
     | 'create_routine';
@@ -231,12 +233,49 @@ function scanToken(context: ScannerContext): Token {
     }
   }
 
+  if (context.options.allowCustomSqlTerminator) {
+    const m = s.slice(pos).match(/^SET[ \t]+SQLT(ERMINATOR)?[ \t]+(ON|OFF|".")/i);
+    if (m) {
+      if (m[2].toUpperCase() == 'OFF') {
+        return {
+          type: 'set_sqlterminator',
+          value: null,
+          length: m[0].length,
+        };
+      }
+      if (m[2].toUpperCase() == 'ON') {
+        return {
+          type: 'set_sqlterminator',
+          value: SEMICOLON,
+          length: m[0].length,
+        };
+      }
+      if (m[2].startsWith('"')) {
+        return {
+          type: 'set_sqlterminator',
+          value: m[2].slice(1, -1),
+          length: m[0].length,
+        };
+      }
+    }
+  }
+
   if ((context.options.allowGoDelimiter || context.options.adaptiveGoSplit) && !context.wasDataOnLine) {
     const m = s.slice(pos).match(/^GO[\t\r ]*(\n|$)/i);
     if (m) {
       return {
         type: 'go_delimiter',
-        length: m[0].length - 1,
+        length: m[0].endsWith('\n') ? m[0].length - 1 : m[0].length,
+      };
+    }
+  }
+
+  if (context.options.allowSlashDelimiter && !context.wasDataOnLine) {
+    const m = s.slice(pos).match(/^\/[\t\r ]*(\n|$)/i);
+    if (m) {
+      return {
+        type: 'slash_delimiter',
+        length: m[0].endsWith('\n') ? m[0].length - 1 : m[0].length,
       };
     }
   }
@@ -246,7 +285,7 @@ function scanToken(context: ScannerContext): Token {
     if (m) {
       return {
         type: 'create_routine',
-        length: m[0].length - 1,
+        length: m[0].length,
       };
     }
   }
@@ -403,6 +442,7 @@ export function splitQueryLine(context: SplitLineContext) {
         movePosition(context, token.length, true);
         break;
       case 'set_delimiter':
+      case 'set_sqlterminator':
         pushQuery(context);
         context.commandPart = '';
         context.currentDelimiter = token.value;
@@ -419,6 +459,13 @@ export function splitQueryLine(context: SplitLineContext) {
         if (context.options.adaptiveGoSplit) {
           context.currentDelimiter = SEMICOLON;
         }
+        break;
+      case 'slash_delimiter':
+        pushQuery(context);
+        context.commandPart = '';
+        movePosition(context, token.length, false);
+        context.currentCommandStart = context.position;
+        markStartCommand(context);
         break;
       case 'create_routine':
         movePosition(context, token.length, false);
