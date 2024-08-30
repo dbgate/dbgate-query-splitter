@@ -24,6 +24,23 @@ test('correct split 2 queries - no end semicolon', () => {
   expect(output).toEqual(['SELECT * FROM `table1`', 'SELECT * FROM `table2`']);
 });
 
+test('correct split 2 queries - with escaped string', () => {
+  const output = splitQuery(
+    "INSERT INTO names (name) VALUES('one\\\\');INSERT INTO names (name) VALUES('two\\\\');",
+    mysqlSplitterOptions
+  );
+  expect(output).toEqual(["INSERT INTO names (name) VALUES('one\\\\')", "INSERT INTO names (name) VALUES('two\\\\')"]);
+});
+
+test('incorrect used escape', () => {
+  const output = splitQuery(
+    "query1\\",
+    mysqlSplitterOptions
+  );
+  expect(output).toEqual(["query1\\"]);
+});
+
+
 test('delete empty query', () => {
   const output = splitQuery(';;;\n;;SELECT * FROM `table1`;;;;;SELECT * FROM `table2`;;; ;;;', mysqlSplitterOptions);
   expect(output).toEqual(['SELECT * FROM `table1`', 'SELECT * FROM `table2`']);

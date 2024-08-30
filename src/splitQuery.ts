@@ -100,17 +100,6 @@ function movePosition(context: SplitLineContext, count: number, isWhite: boolean
   }
 }
 
-function isStringEnd(s: string, pos: number, endch: string, escapech: string) {
-  if (!escapech) {
-    return s[pos] == endch;
-  }
-  if (endch == escapech) {
-    return s[pos] == endch && s[pos + 1] != endch;
-  } else {
-    return s[pos] == endch && s[pos - 1] != escapech;
-  }
-}
-
 interface Token {
   type:
     | 'string'
@@ -174,8 +163,12 @@ function scanToken(context: ScannerContext): Token {
     pos++;
     const endch = context.options.stringsEnds[ch];
     const escapech = context.options.stringEscapes[ch];
-    while (pos < context.end && !isStringEnd(s, pos, endch, escapech)) {
-      if (endch == escapech && s[pos] == endch && s[pos + 1] == endch) {
+    while (pos < context.end) {
+      if (s[pos] == endch) {
+        break;
+      }
+
+      if (escapech && s[pos] == escapech) {
         pos += 2;
       } else {
         pos++;
