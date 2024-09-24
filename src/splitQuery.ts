@@ -25,6 +25,9 @@ export interface SplitStreamContext {
   trimCommandStartColumn: number;
 
   wasDataInCommand: boolean;
+
+  isCopyFromStdin: boolean;
+  isCopyFromStdinCandidate: boolean;
 }
 
 interface ScannerContext {
@@ -61,6 +64,8 @@ export interface SplitResultItemRich {
   end: SplitPositionDefinition;
   trimStart?: SplitPositionDefinition;
   trimEnd?: SplitPositionDefinition;
+  isCopyFromStdinBegin?: boolean;
+  isCopyFromStdinEnd?: boolean;
 }
 
 export type SplitResultItem = string | SplitResultItemRich;
@@ -123,7 +128,8 @@ interface Token {
     | 'set_sqlterminator'
     | 'comment'
     | 'go_delimiter'
-    | 'create_routine';
+    | 'create_routine'
+    | 'copy';
   length: number;
   value?: string;
 }
@@ -288,6 +294,17 @@ function scanToken(context: ScannerContext): Token {
         length: m[0].length,
       };
     }
+  }
+
+  if (context.options.copyFromStdin && !context.wasDataOnLine && s.slice(pos).startsWith('COPY ')) {
+    return {
+      type: 'copy',
+      length: 5,
+    };
+  }
+
+  if (context.isCopyFromStdinCandidate && s.slice(pos).startsWith('FROM stdin')) {
+    // TODO
   }
 
   const dollarString = scanDollarQuotedString(context);
@@ -473,6 +490,10 @@ export function splitQueryLine(context: SplitLineContext) {
           context.currentDelimiter = null;
         }
         break;
+      case 'copy':
+        movePosition(context, token.length, false);
+        context.isCopyFromStdinCandidate = true;
+        break;
       case 'delimiter':
         if (context.options.preventSingleLineSplit && containsDataAfterDelimiterOnLine(context, token)) {
           movePosition(context, token.length, false);
@@ -484,6 +505,7 @@ export function splitQueryLine(context: SplitLineContext) {
         movePosition(context, token.length, false);
         context.currentCommandStart = context.position;
         markStartCommand(context);
+        context.isCopyFromStdinCandidate = false;
         break;
     }
   }
@@ -553,6 +575,8 @@ export function splitQuery(sql: string, options: SplitterOptions = null): SplitR
     trimCommandStartColumn: 0,
 
     wasDataInCommand: false,
+    isCopyFromStdin: false,
+    isCopyFromStdinCandidate: false,
 
     pushOutput: cmd => output.push(cmd),
     wasDataOnLine: false,
