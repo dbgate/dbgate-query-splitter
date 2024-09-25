@@ -37,6 +37,8 @@ interface ScannerContext {
   readonly currentDelimiter: string;
   readonly end: number;
   readonly wasDataOnLine: boolean;
+  readonly isCopyFromStdin: boolean;
+  readonly isCopyFromStdinCandidate: boolean;
 }
 
 export interface SplitLineContext extends SplitStreamContext {
@@ -129,7 +131,10 @@ interface Token {
     | 'comment'
     | 'go_delimiter'
     | 'create_routine'
-    | 'copy';
+    | 'copy'
+    | 'copy_stdin_start'
+    | 'copy_stdin_end'
+    | 'copy_stdin_line';
   length: number;
   value?: string;
 }
@@ -175,6 +180,15 @@ function scanToken(context: ScannerContext): Token {
   let pos = context.position;
   const s = context.source;
   const ch = s[pos];
+
+  if (context.isCopyFromStdin) {
+    if (s.slice(pos).startsWith('\\.') && !context.wasDataOnLine) {
+      return {
+        type: 'copy_stdin_end',
+        length: 2,
+      };
+    }
+  }
 
   if (context.options.stringsBegins.includes(ch)) {
     pos++;
@@ -303,8 +317,14 @@ function scanToken(context: ScannerContext): Token {
     };
   }
 
-  if (context.isCopyFromStdinCandidate && s.slice(pos).startsWith('FROM stdin')) {
-    // TODO
+  if (context.isCopyFromStdinCandidate && s.slice(pos).startsWith('FROM stdin;')) {
+    let pos2 = pos + 'FROM stdin;'.length;
+    while (pos2 < context.end && s[pos2] != '\n') pos2++;
+    if (s[pos2] == '\n') pos2++;
+    return {
+      type: 'copy_stdin_start',
+      length: pos2 - pos,
+    };
   }
 
   const dollarString = scanDollarQuotedString(context);
@@ -321,6 +341,8 @@ function containsDataAfterDelimiterOnLine(context: ScannerContext, delimiter: To
     currentDelimiter: context.currentDelimiter,
     end: context.end,
     wasDataOnLine: context.wasDataOnLine,
+    isCopyFromStdinCandidate: context.isCopyFromStdinCandidate,
+    isCopyFromStdin: context.isCopyFromStdin,
   };
 
   cloned.position += delimiter.length;
@@ -493,6 +515,11 @@ export function splitQueryLine(context: SplitLineContext) {
       case 'copy':
         movePosition(context, token.length, false);
         context.isCopyFromStdinCandidate = true;
+        break;
+      case 'copy_stdin_start':
+        movePosition(context, token.length, false);
+        context.isCopyFromStdin = true;
+        context.isCopyFromStdinCandidate = false;
         break;
       case 'delimiter':
         if (context.options.preventSingleLineSplit && containsDataAfterDelimiterOnLine(context, token)) {
