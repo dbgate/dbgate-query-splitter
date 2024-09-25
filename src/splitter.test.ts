@@ -262,19 +262,22 @@ test('postgres copy from stdin', () => {
     expect.arrayContaining([
       expect.objectContaining({
         text: 'COPY public."Genre" ("GenreId", "Name") FROM stdin',
-        isCopyFromStdinBegin: true,
+        specialMarker: 'copy_stdin_start',
       }),
       expect.objectContaining({
         text: '1\tRock\n',
+        specialMarker: 'copy_stdin_line',
       }),
       expect.objectContaining({
         text: '2\tJazz\n',
+        specialMarker: 'copy_stdin_line',
       }),
       expect.objectContaining({
         text: '3\tMetal\n',
+        specialMarker: 'copy_stdin_line',
       }),
       expect.objectContaining({
-        isCopyFromStdinEnd: true,
+        specialMarker: 'copy_stdin_end',
       }),
       expect.objectContaining({
         text: 'CREATE TABLE xxx',

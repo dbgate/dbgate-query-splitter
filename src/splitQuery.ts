@@ -2,6 +2,7 @@ import { SplitterOptions, defaultSplitterOptions } from './options';
 
 const SEMICOLON = ';';
 
+type SplitterSpecialMarkerType = 'copy_stdin_start' | 'copy_stdin_end' | 'copy_stdin_line';
 export interface SplitStreamContext {
   options: SplitterOptions;
   currentDelimiter: string;
@@ -66,8 +67,7 @@ export interface SplitResultItemRich {
   end: SplitPositionDefinition;
   trimStart?: SplitPositionDefinition;
   trimEnd?: SplitPositionDefinition;
-  isCopyFromStdinBegin?: boolean;
-  isCopyFromStdinEnd?: boolean;
+  specialMarker?: SplitterSpecialMarkerType;
 }
 
 export type SplitResultItem = string | SplitResultItemRich;
@@ -136,6 +136,7 @@ interface Token {
     | 'copy_stdin_end'
     | 'copy_stdin_line';
   length: number;
+  lengthWithoutWhitespace?: number;
   value?: string;
 }
 
@@ -188,6 +189,14 @@ function scanToken(context: ScannerContext): Token {
         length: 2,
       };
     }
+
+    let pos2 = pos;
+    while (pos2 < context.end && s[pos2] != '\n') pos2++;
+    if (pos2 < context.end && s[pos2] == '\n') pos2++;
+    return {
+      type: 'copy_stdin_line',
+      length: pos2 - pos,
+    };
   }
 
   if (context.options.stringsBegins.includes(ch)) {
@@ -319,11 +328,13 @@ function scanToken(context: ScannerContext): Token {
 
   if (context.isCopyFromStdinCandidate && s.slice(pos).startsWith('FROM stdin;')) {
     let pos2 = pos + 'FROM stdin;'.length;
+    const pos0 = pos2 - 1;
     while (pos2 < context.end && s[pos2] != '\n') pos2++;
     if (s[pos2] == '\n') pos2++;
     return {
       type: 'copy_stdin_start',
       length: pos2 - pos,
+      lengthWithoutWhitespace: pos0 - pos,
     };
   }
 
@@ -371,12 +382,12 @@ function containsDataAfterDelimiterOnLine(context: ScannerContext, delimiter: To
   }
 }
 
-function pushQuery(context: SplitLineContext) {
+function pushQuery(context: SplitLineContext, specialMarker?: SplitterSpecialMarkerType) {
   context.commandPart += context.source.slice(context.currentCommandStart, context.position);
-  pushCurrentQueryPart(context);
+  pushCurrentQueryPart(context, specialMarker);
 }
 
-function pushCurrentQueryPart(context: SplitStreamContext) {
+function pushCurrentQueryPart(context: SplitStreamContext, specialMarker?: SplitterSpecialMarkerType) {
   const trimmed = context.commandPart.substring(
     context.trimCommandStartPosition - context.commandStartPosition,
     context.noWhitePosition - context.commandStartPosition
@@ -410,6 +421,8 @@ function pushCurrentQueryPart(context: SplitStreamContext) {
           line: context.noWhiteLine,
           column: context.noWhiteColumn,
         },
+
+        specialMarker,
       });
     } else {
       context.pushOutput(trimmed);
@@ -515,11 +528,42 @@ export function splitQueryLine(context: SplitLineContext) {
       case 'copy':
         movePosition(context, token.length, false);
         context.isCopyFromStdinCandidate = true;
+        context.wasDataOnLine = true;
         break;
       case 'copy_stdin_start':
+        movePosition(context, token.lengthWithoutWhitespace, false);
+        movePosition(context, token.length - token.lengthWithoutWhitespace!, true);
+        context.isCopyFromStdin = true;
+        context.isCopyFromStdinCandidate = false;
+        context.wasDataOnLine = false;
+
+        pushQuery(context, 'copy_stdin_start');
+        context.commandPart = '';
+        context.currentCommandStart = context.position;
+        markStartCommand(context);
+
+        break;
+      case 'copy_stdin_line':
         movePosition(context, token.length, false);
         context.isCopyFromStdin = true;
         context.isCopyFromStdinCandidate = false;
+
+        pushQuery(context, 'copy_stdin_line');
+        context.commandPart = '';
+        context.currentCommandStart = context.position;
+        markStartCommand(context);
+
+        break;
+      case 'copy_stdin_end':
+        movePosition(context, token.length, false);
+        context.isCopyFromStdin = false;
+        context.wasDataOnLine = true;
+
+        pushQuery(context, 'copy_stdin_end');
+        context.commandPart = '';
+        context.currentCommandStart = context.position;
+        markStartCommand(context);
+
         break;
       case 'delimiter':
         if (context.options.preventSingleLineSplit && containsDataAfterDelimiterOnLine(context, token)) {
