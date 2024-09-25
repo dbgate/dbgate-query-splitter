@@ -32,6 +32,8 @@ export class SplitQueryStream extends stream.Transform {
       trimCommandStartColumn: 0,
 
       wasDataInCommand: false,
+      isCopyFromStdin: false,
+      isCopyFromStdinCandidate: false,
 
       options,
       currentDelimiter: getInitialDelimiter(options),

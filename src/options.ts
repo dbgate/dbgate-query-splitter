@@ -22,6 +22,8 @@ export interface SplitterOptions {
 
   returnRichInfo: boolean;
   splitByLines: boolean;
+
+  copyFromStdin: boolean;
 }
 
 export const defaultSplitterOptions: SplitterOptions = {
@@ -46,6 +48,8 @@ export const defaultSplitterOptions: SplitterOptions = {
   preventSingleLineSplit: false,
   adaptiveGoSplit: false,
   ignoreComments: false,
+
+  copyFromStdin: false,
 };
 
 export const mysqlSplitterOptions: SplitterOptions = {

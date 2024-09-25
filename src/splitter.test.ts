@@ -266,3 +266,39 @@ test('oracle custom terminator', () => {
   const output = splitQuery(input, oracleSplitterOptions);
   expect(output).toEqual(['SELECT 1', 'SELECT 2']);
 });
+
+test('postgres copy from stdin', () => {
+  const input = 'COPY public."Genre" ("GenreId", "Name") FROM stdin;\n1	Rock\n2	Jazz\n3	Metal\n\\.\nCREATE TABLE xxx';
+  const output = splitQuery(input, {
+    ...postgreSplitterOptions,
+    copyFromStdin: true,
+    returnRichInfo: true,
+  });
+
+  expect(output).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        text: 'COPY public."Genre" ("GenreId", "Name") FROM stdin',
+        specialMarker: 'copy_stdin_start',
+      }),
+      expect.objectContaining({
+        text: '1\tRock\n',
+        specialMarker: 'copy_stdin_line',
+      }),
+      expect.objectContaining({
+        text: '2\tJazz\n',
+        specialMarker: 'copy_stdin_line',
+      }),
+      expect.objectContaining({
+        text: '3\tMetal\n',
+        specialMarker: 'copy_stdin_line',
+      }),
+      expect.objectContaining({
+        specialMarker: 'copy_stdin_end',
+      }),
+      expect.objectContaining({
+        text: 'CREATE TABLE xxx',
+      }),
+    ])
+  );
+});
