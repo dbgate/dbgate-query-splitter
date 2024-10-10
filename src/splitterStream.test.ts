@@ -73,3 +73,16 @@ test('northwind test', async () => {
   const output = await streamToArray(splitQueryStream(fileStream, mysqlSplitterOptions));
   expect(output['length']).toEqual(29);
 });
+
+test('pgdump test', async () => {
+  console.log(process.cwd());
+  const fileStream = fs.createReadStream('sql/pgdump.sql', 'utf-8');
+  const output = await streamToArray(
+    splitQueryStream(fileStream, {
+      ...postgreSplitterOptions,
+      copyFromStdin: true,
+      returnRichInfo: true,
+    })
+  );
+  expect(output['length']).toEqual(7);
+});

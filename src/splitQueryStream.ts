@@ -68,6 +68,8 @@ export class SplitQueryStream extends stream.Transform {
       trimCommandStartColumn: this.context.trimCommandStartColumn,
 
       wasDataInCommand: this.context.wasDataInCommand,
+      isCopyFromStdin: this.context.isCopyFromStdin,
+      isCopyFromStdinCandidate: this.context.isCopyFromStdinCandidate,
     };
 
     splitQueryLine(lineContext);
@@ -92,6 +94,8 @@ export class SplitQueryStream extends stream.Transform {
     this.context.trimCommandStartColumn = lineContext.trimCommandStartColumn;
 
     this.context.wasDataInCommand = lineContext.wasDataInCommand;
+    this.context.isCopyFromStdin = lineContext.isCopyFromStdin;
+    this.context.isCopyFromStdinCandidate = lineContext.isCopyFromStdinCandidate;
 
     this.lineBuffer = '';
   }
