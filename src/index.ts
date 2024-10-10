@@ -1,3 +1,3 @@
 export { splitQuery } from './splitQuery';
-export { splitQueryStream } from './splitQueryStream';
+export { extractQueryParameters, replaceQueryParameters } from './queryParamHandler';
 export * from './options';
