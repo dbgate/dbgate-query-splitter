@@ -1,3 +1,5 @@
+export type QueryParameterStyle = null | '?' | '$' | '@' | ':' | '#';
+
 export interface SplitterOptions {
   stringsBegins: string[];
   stringsEnds: { [begin: string]: string };
@@ -24,6 +26,8 @@ export interface SplitterOptions {
   splitByLines: boolean;
 
   copyFromStdin: boolean;
+
+  queryParameterStyle: QueryParameterStyle;
 }
 
 export const defaultSplitterOptions: SplitterOptions = {
@@ -50,6 +54,7 @@ export const defaultSplitterOptions: SplitterOptions = {
   ignoreComments: false,
 
   copyFromStdin: false,
+  queryParameterStyle: null,
 };
 
 export const mysqlSplitterOptions: SplitterOptions = {

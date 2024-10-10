@@ -31,7 +31,7 @@ export interface SplitStreamContext {
   isCopyFromStdinCandidate: boolean;
 }
 
-interface ScannerContext {
+export interface ScannerContext {
   readonly options: SplitterOptions;
   readonly source: string;
   readonly position: number;
@@ -123,7 +123,8 @@ interface Token {
     | 'copy'
     | 'copy_stdin_start'
     | 'copy_stdin_end'
-    | 'copy_stdin_line';
+    | 'copy_stdin_line'
+    | 'parameter';
   length: number;
   lengthWithoutWhitespace?: number;
   value?: string;
@@ -166,7 +167,7 @@ function scanDollarQuotedString(context: ScannerContext): Token {
   return null;
 }
 
-function scanToken(context: ScannerContext): Token {
+export function scanToken(context: ScannerContext): Token {
   let pos = context.position;
   const s = context.source;
   const ch = s[pos];
@@ -206,6 +207,21 @@ function scanToken(context: ScannerContext): Token {
     return {
       type: 'string',
       length: pos - context.position + 1,
+    };
+  }
+
+  if (
+    context.options.queryParameterStyle &&
+    context.options.queryParameterStyle?.length == 1 &&
+    ch == context.options.queryParameterStyle
+  ) {
+    pos++;
+    while (pos < context.end && /[a-zA-Z0-9_]/.test(s[pos])) pos++;
+
+    return {
+      type: 'parameter',
+      value: s.slice(context.position, pos),
+      length: pos - context.position,
     };
   }
 
@@ -480,6 +496,10 @@ export function splitQueryLine(context: SplitLineContext) {
         context.wasDataOnLine = false;
         break;
       case 'data':
+        movePosition(context, token.length, false);
+        context.wasDataOnLine = true;
+        break;
+      case 'parameter':
         movePosition(context, token.length, false);
         context.wasDataOnLine = true;
         break;
