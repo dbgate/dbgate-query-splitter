@@ -15,6 +15,10 @@ function createParameterizerContext(sql: string, options: SplitterOptions) {
 }
 
 export function extractQueryParameters(sql: string, options: SplitterOptions): string[] {
+  if (!sql || !options) {
+    return [];
+  }
+
   const context = createParameterizerContext(sql, options);
 
   const res = new Set<string>();
@@ -42,6 +46,10 @@ export function replaceQueryParameters(
   params: { [name: string]: string },
   options: SplitterOptions
 ): string {
+  if (!sql || !options) {
+    return sql;
+  }
+
   const context = createParameterizerContext(sql, options);
 
   let res = '';
