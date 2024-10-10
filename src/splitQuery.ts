@@ -213,10 +213,13 @@ export function scanToken(context: ScannerContext): Token {
   if (
     context.options.queryParameterStyle &&
     context.options.queryParameterStyle?.length == 1 &&
-    ch == context.options.queryParameterStyle
+    ch == context.options.queryParameterStyle &&
+    (context.options.queryParameterStyle == '?' || /[a-zA-Z0-9_]/.test(s[pos + 1]))
   ) {
     pos++;
-    while (pos < context.end && /[a-zA-Z0-9_]/.test(s[pos])) pos++;
+    if (context.options.queryParameterStyle != '?') {
+      while (pos < context.end && /[a-zA-Z0-9_]/.test(s[pos])) pos++;
+    }
 
     return {
       type: 'parameter',

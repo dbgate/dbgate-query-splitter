@@ -25,7 +25,11 @@ export function extractQueryParameters(sql: string, options: SplitterOptions): s
       break;
     }
     if (token.type === 'parameter') {
-      res.add(token.value);
+      if (token.value == '?') {
+        res.add(`?${res.size + 1}`);
+      } else {
+        res.add(token.value);
+      }
     }
     context.position += token.length;
   }
@@ -41,14 +45,16 @@ export function replaceQueryParameters(
   const context = createParameterizerContext(sql, options);
 
   let res = '';
+  let questionParamCounter = 0;
   while (context.position < context.end) {
     const token = scanToken(context);
     if (token === null) {
       break;
     }
     if (token.type === 'parameter') {
-      if (params[token.value]) {
-        res += params[token.value];
+      const paramName = token.value == '?' ? `?${++questionParamCounter}` : token.value;
+      if (params[paramName]) {
+        res += params[paramName];
       } else {
         res += sql.substring(context.position, context.position + token.length);
       }
