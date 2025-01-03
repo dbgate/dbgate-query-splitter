@@ -6,6 +6,7 @@ import {
   noSplitSplitterOptions,
   redisSplitterOptions,
   oracleSplitterOptions,
+  sqliteSplitterOptions,
 } from './options';
 import { splitQuery } from './splitQuery';
 
@@ -33,13 +34,9 @@ test('correct split 2 queries - with escaped string', () => {
 });
 
 test('incorrect used escape', () => {
-  const output = splitQuery(
-    "query1\\",
-    mysqlSplitterOptions
-  );
-  expect(output).toEqual(["query1\\"]);
+  const output = splitQuery('query1\\', mysqlSplitterOptions);
+  expect(output).toEqual(['query1\\']);
 });
-
 
 test('delete empty query', () => {
   const output = splitQuery(';;;\n;;SELECT * FROM `table1`;;;;;SELECT * FROM `table2`;;; ;;;', mysqlSplitterOptions);
@@ -301,4 +298,48 @@ test('postgres copy from stdin', () => {
       }),
     ])
   );
+});
+
+test('sqlite skipSeparatorBeginEnd', () => {
+  const input = 'CREATE TRIGGER obj1 AFTER INSERT ON t1 FOR EACH ROW BEGIN SELECT * FROM t1; END';
+  const output = splitQuery(input, {
+    ...sqliteSplitterOptions,
+  });
+
+  expect(output.length).toBe(1);
+  expect(output[0]).toEqual(input);
+});
+
+test('sqlite skipSeparatorBeginEnd in lowercase', () => {
+  const input = 'create trigger obj1 after insert on t1 for each row begin select * from t1; end';
+  const output = splitQuery(input, {
+    ...sqliteSplitterOptions,
+  });
+
+  expect(output.length).toBe(1);
+  expect(output[0]).toEqual(input);
+});
+
+test('sqlite skipSeparatorBeginEnd in TRANSACTION', () => {
+  const input = `BEGIN TRANSACTION; UPDATE t1 SET x=0;; END;`;
+  const output = splitQuery(input, {
+    ...sqliteSplitterOptions,
+  });
+
+  expect(output.length).toBe(3);
+  expect(output[0]).toEqual('BEGIN TRANSACTION');
+  expect(output[1]).toEqual('UPDATE t1 SET x=0');
+  expect(output[2]).toEqual('END');
+});
+
+test('sqlite skipSeparatorBeginEnd in TRANSACTION in lowercase', () => {
+  const input = `begin transaction; update t1 set x=0;; end;`;
+  const output = splitQuery(input, {
+    ...sqliteSplitterOptions,
+  });
+
+  expect(output.length).toBe(3);
+  expect(output[0]).toEqual('begin transaction');
+  expect(output[1]).toEqual('update t1 set x=0');
+  expect(output[2]).toEqual('end');
 });

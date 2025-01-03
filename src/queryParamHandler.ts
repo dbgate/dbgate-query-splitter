@@ -11,6 +11,7 @@ function createParameterizerContext(sql: string, options: SplitterOptions) {
     wasDataOnLine: false,
     isCopyFromStdin: false,
     isCopyFromStdinCandidate: false,
+    beginEndIdentLevel: 0,
   };
 }
 

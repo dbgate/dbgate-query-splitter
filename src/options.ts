@@ -15,6 +15,7 @@ export interface SplitterOptions {
   doubleDashComments: boolean;
   multilineComments: boolean;
   javaScriptComments: boolean;
+  skipSeparatorBeginEnd: boolean;
   // comments willl be not part of output
   ignoreComments: boolean;
   // if more commands are on single line, they are not splitted
@@ -42,6 +43,7 @@ export const defaultSplitterOptions: SplitterOptions = {
   allowSlashDelimiter: false,
   allowDollarDollarString: false,
   noSplit: false,
+  skipSeparatorBeginEnd: false,
 
   doubleDashComments: true,
   multilineComments: true,
@@ -89,6 +91,7 @@ export const postgreSplitterOptions: SplitterOptions = {
 export const sqliteSplitterOptions: SplitterOptions = {
   ...defaultSplitterOptions,
 
+  skipSeparatorBeginEnd: true,
   stringsBegins: ["'", '"'],
   stringsEnds: { "'": "'", '"': '"' },
   stringEscapes: { "'": "'", '"': '"' },
