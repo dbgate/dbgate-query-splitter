@@ -45,6 +45,7 @@ export class SplitQueryStream extends stream.Transform {
   flushBuffer() {
     const lineContext: SplitLineContext = {
       ...this.context,
+      beginEndIdentLevel: 0,
       position: 0,
       currentCommandStart: 0,
       wasDataOnLine: false,

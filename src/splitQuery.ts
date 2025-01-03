@@ -1,6 +1,10 @@
 import { SplitterOptions, defaultSplitterOptions } from './options';
 
 const SEMICOLON = ';';
+const BEGIN_EXTRA_KEYWORDS = ['DEFERRED', 'IMMEDIATE', 'EXCLUSIVE', 'TRANSACTION'];
+const BEGIN_EXTRA_KEYWORDS_REGEX = new RegExp(`^(?:${BEGIN_EXTRA_KEYWORDS.join('|')})`, 'i');
+const END_EXTRA_KEYWORDS = ['TRANSACTION', 'IF'];
+const END_EXTRA_KEYWORDS_REGEX = new RegExp(`^(?:${END_EXTRA_KEYWORDS.join('|')})`, 'i');
 
 type SplitterSpecialMarkerType = 'copy_stdin_start' | 'copy_stdin_end' | 'copy_stdin_line';
 export interface SplitStreamContext {
@@ -40,6 +44,7 @@ export interface ScannerContext {
   readonly wasDataOnLine: boolean;
   readonly isCopyFromStdin: boolean;
   readonly isCopyFromStdinCandidate: boolean;
+  readonly beginEndIdentLevel: number;
 }
 
 export interface SplitLineContext extends SplitStreamContext {
@@ -49,6 +54,7 @@ export interface SplitLineContext extends SplitStreamContext {
   end: number;
   wasDataOnLine: boolean;
   currentCommandStart: number;
+  beginEndIdentLevel: number;
 
   //   unread: string;
   //   currentStatement: string;
@@ -111,6 +117,8 @@ interface Token {
   type:
     | 'string'
     | 'delimiter'
+    | 'end'
+    | 'begin'
     | 'whitespace'
     | 'eoln'
     | 'data'
@@ -228,7 +236,8 @@ export function scanToken(context: ScannerContext): Token {
     };
   }
 
-  if (context.currentDelimiter && s.slice(pos).startsWith(context.currentDelimiter)) {
+  const isInBeginEnd = context.options.skipSeparatorBeginEnd && context.beginEndIdentLevel > 0;
+  if (context.currentDelimiter && s.slice(pos).startsWith(context.currentDelimiter) && !isInBeginEnd) {
     return {
       type: 'delimiter',
       length: context.currentDelimiter.length,
@@ -350,6 +359,35 @@ export function scanToken(context: ScannerContext): Token {
     };
   }
 
+  if (context.options.skipSeparatorBeginEnd && s.slice(pos).match(/^begin/i)) {
+    let pos2 = pos + 'BEGIN'.length;
+    let pos0 = pos2;
+
+    while (pos0 < context.end && /[^a-zA-Z0-9]/.test(s[pos0])) pos0++;
+
+    if (!BEGIN_EXTRA_KEYWORDS_REGEX.test(s.slice(pos0))) {
+      return {
+        type: 'begin',
+        length: pos2 - pos,
+        lengthWithoutWhitespace: pos0 - pos,
+      };
+    }
+  }
+
+  if (context.options.skipSeparatorBeginEnd && s.slice(pos).match(/^end/i)) {
+    let pos2 = pos + 'END'.length;
+    let pos0 = pos2;
+
+    while (pos0 < context.end && /[^a-zA-Z0-9]/.test(s[pos0])) pos0++;
+
+    if (!END_EXTRA_KEYWORDS_REGEX.test(s.slice(pos0))) {
+      return {
+        type: 'end',
+        length: pos2 - pos,
+      };
+    }
+  }
+
   const dollarString = scanDollarQuotedString(context);
   if (dollarString) return dollarString;
 
@@ -366,6 +404,7 @@ function containsDataAfterDelimiterOnLine(context: ScannerContext, delimiter: To
     wasDataOnLine: context.wasDataOnLine,
     isCopyFromStdinCandidate: context.isCopyFromStdinCandidate,
     isCopyFromStdin: context.isCopyFromStdin,
+    beginEndIdentLevel: context.beginEndIdentLevel,
   };
 
   cloned.position += delimiter.length;
@@ -594,6 +633,18 @@ export function splitQueryLine(context: SplitLineContext) {
         markStartCommand(context);
         context.isCopyFromStdinCandidate = false;
         break;
+      case 'begin':
+        if (context.options.skipSeparatorBeginEnd) {
+          context.beginEndIdentLevel++;
+        }
+        movePosition(context, token.length, false);
+        break;
+      case 'end':
+        if (context.options.skipSeparatorBeginEnd && context.beginEndIdentLevel > 0) {
+          context.beginEndIdentLevel--;
+        }
+        movePosition(context, token.length, false);
+        break;
     }
   }
 
@@ -660,6 +711,7 @@ export function splitQuery(sql: string, options: SplitterOptions = null): SplitR
     trimCommandStartPosition: 0,
     trimCommandStartLine: 0,
     trimCommandStartColumn: 0,
+    beginEndIdentLevel: 0,
 
     wasDataInCommand: false,
     isCopyFromStdin: false,
