@@ -25,6 +25,7 @@ export interface SplitterOptions {
 
   returnRichInfo: boolean;
   splitByLines: boolean;
+  splitByEmptyLine: boolean;
 
   copyFromStdin: boolean;
 
@@ -51,6 +52,7 @@ export const defaultSplitterOptions: SplitterOptions = {
 
   returnRichInfo: false,
   splitByLines: false,
+  splitByEmptyLine: false,
   preventSingleLineSplit: false,
   adaptiveGoSplit: false,
   ignoreComments: false,

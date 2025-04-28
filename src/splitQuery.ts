@@ -534,6 +534,15 @@ export function splitQueryLine(context: SplitLineContext) {
         context.wasDataOnLine = true;
         break;
       case 'eoln':
+        if (!context.wasDataOnLine && context.options.splitByEmptyLine) {
+          pushQuery(context);
+          context.commandPart = '';
+          movePosition(context, token.length, false);
+          context.currentCommandStart = context.position;
+          context.wasDataOnLine = false;
+          markStartCommand(context);
+          break;
+        }
         movePosition(context, token.length, true);
         context.wasDataOnLine = false;
         break;

@@ -240,6 +240,18 @@ test('count lines with flush', () => {
   );
 });
 
+test('empty line delimiter', () => {
+  const input = 'SELECT 1\n\n   \nSELECT 2\n';
+  const output = splitQuery(input, { ...mysqlSplitterOptions, splitByEmptyLine: true });
+  expect(output).toEqual(['SELECT 1', 'SELECT 2']);
+});
+
+test('empty line delimiter - 2 lines', () => {
+  const input = 'SELECT 1\n\n   \nSELECT 2\nSELECT 3\n';
+  const output = splitQuery(input, { ...mysqlSplitterOptions, splitByEmptyLine: true });
+  expect(output).toEqual(['SELECT 1', 'SELECT 2\nSELECT 3']);
+});
+
 test('shash delimiter', () => {
   const input = 'SELECT 1\n/\nSELECT 2\n';
   const output = splitQuery(input, oracleSplitterOptions);
