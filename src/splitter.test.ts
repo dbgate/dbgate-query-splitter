@@ -33,6 +33,11 @@ test('correct split 2 queries - with escaped string', () => {
   expect(output).toEqual(["INSERT INTO names (name) VALUES('one\\\\')", "INSERT INTO names (name) VALUES('two\\\\')"]);
 });
 
+test('mysql - use quote styles', () => {
+  const output = splitQuery(`SELECT "'";SELECT '"';SELECT 3`, mysqlSplitterOptions);
+  expect(output).toEqual([`SELECT "'"`, `SELECT '"'`, `SELECT 3`]);
+});
+
 test('incorrect used escape', () => {
   const output = splitQuery('query1\\', mysqlSplitterOptions);
   expect(output).toEqual(['query1\\']);

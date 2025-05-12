@@ -65,9 +65,9 @@ export const mysqlSplitterOptions: SplitterOptions = {
   ...defaultSplitterOptions,
 
   allowCustomDelimiter: true,
-  stringsBegins: ["'", '`'],
-  stringsEnds: { "'": "'", '`': '`' },
-  stringEscapes: { "'": '\\', '`': '`' },
+  stringsBegins: ["'", '`', '"'],
+  stringsEnds: { "'": "'", '`': '`', '"': '"' },
+  stringEscapes: { "'": '\\', '`': '`', '"': '\\' },
 };
 
 export const mssqlSplitterOptions: SplitterOptions = {
