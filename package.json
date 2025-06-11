@@ -7,7 +7,7 @@
   "homepage": "https://dbgate.org",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dbgate/dbgate-query-spliiter"
+    "url": "https://github.com/dbgate/dbgate-query-splitter"
   },
   "author": "Jan Prochazka",
   "license": "MIT",
