@@ -129,3 +129,9 @@ export const oracleSplitterOptions: SplitterOptions = {
   stringsEnds: { "'": "'", '"': '"' },
   stringEscapes: { "'": "'", '"': '"' },
 };
+
+export const firebirdSplitterOptions: SplitterOptions = {
+  ...defaultSplitterOptions,
+
+  skipSeparatorBeginEnd: true,
+};
