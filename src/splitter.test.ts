@@ -7,6 +7,7 @@ import {
   redisSplitterOptions,
   oracleSplitterOptions,
   sqliteSplitterOptions,
+  firebirdSplitterOptions,
 } from './options';
 import { splitQuery } from './splitQuery';
 
@@ -360,3 +361,19 @@ test('sqlite skipSeparatorBeginEnd in TRANSACTION in lowercase', () => {
   expect(output[1]).toEqual('update t1 set x=0');
   expect(output[2]).toEqual('end');
 });
+
+test('Firebird - don;t split function definition', () => {
+  const input = `CREATE FUNCTION ADD_INT (A INT, B INT DEFAULT 0)
+RETURNS INT
+AS
+BEGIN
+  RETURN A + B;
+END`;
+  const output = splitQuery(input, {
+    ...firebirdSplitterOptions,
+  });
+
+  expect(output.length).toBe(1);
+  expect(output[0]).toEqual(input);
+});
+
