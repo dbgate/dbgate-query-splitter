@@ -33,9 +33,9 @@ export interface SplitterOptions {
 }
 
 export const defaultSplitterOptions: SplitterOptions = {
-  stringsBegins: ["'"],
-  stringsEnds: { "'": "'" },
-  stringEscapes: { "'": "'" },
+  stringsBegins: ["'", '"'],
+  stringsEnds: { "'": "'", '"': '"' },
+  stringEscapes: { "'": "'", '"': '"' },
 
   allowSemicolon: true,
   allowCustomDelimiter: false,
@@ -134,4 +134,5 @@ export const firebirdSplitterOptions: SplitterOptions = {
   ...defaultSplitterOptions,
 
   skipSeparatorBeginEnd: true,
+  queryParameterStyle: ':', // Firebird uses colon-prefixed parameters (:param_name)
 };
