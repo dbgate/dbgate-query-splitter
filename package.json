@@ -1,13 +1,13 @@
-{
+  {
   "version": "4.11.7",
   "name": "dbgate-query-splitter",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "description": "SQL Query splitter for verious database engines",
-  "homepage": "https://dbgate.org",
+  "homepage": "https://www.dbgate.io",
   "repository": {
     "type": "git",
-    "url": "https://github.com/dbgate/dbgate-query-spliiter"
+    "url": "https://github.com/dbgate/dbgate-query-splitter"
   },
   "author": "Jan Prochazka",
   "license": "MIT",
