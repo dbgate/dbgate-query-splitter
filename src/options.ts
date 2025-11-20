@@ -22,6 +22,7 @@ export interface SplitterOptions {
   preventSingleLineSplit: boolean;
   // overrides allowSemicolon, allowGoDelimiter setting. splits by semicolon, after CREATE PROCEDURE, CREATE FUNCTION, GO separator is required
   adaptiveGoSplit: boolean;
+  keepSemicolonInCommands: boolean;
 
   returnRichInfo: boolean;
   splitByLines: boolean;
@@ -45,6 +46,7 @@ export const defaultSplitterOptions: SplitterOptions = {
   allowDollarDollarString: false,
   noSplit: false,
   skipSeparatorBeginEnd: false,
+  keepSemicolonInCommands: false,
 
   doubleDashComments: true,
   multilineComments: true,
@@ -74,6 +76,7 @@ export const mssqlSplitterOptions: SplitterOptions = {
   ...defaultSplitterOptions,
   allowSemicolon: false,
   allowGoDelimiter: true,
+  keepSemicolonInCommands: true,
 
   stringsBegins: ["'", '['],
   stringsEnds: { "'": "'", '[': ']' },

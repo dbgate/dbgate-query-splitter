@@ -61,13 +61,21 @@ test('semicolon inside string', () => {
   expect(output).toEqual(input);
 });
 
-test('semicolon inside identyifier - mssql', () => {
+test('semicolon inside identifier - mssql', () => {
   const input = ['CREATE TABLE [a;1]', "INSERT INTO [a;1] (x) VALUES ('1')"];
   const output = splitQuery(input.join(';\n') + ';', {
     ...mssqlSplitterOptions,
     allowSemicolon: true,
   });
-  expect(output).toEqual(input);
+  expect(output).toEqual(input.map(x => x + ';'));
+});
+
+test('mssql correct merge statement - mssql', () => {
+  const output = splitQuery('SET IDENTITY ON;\nMERGE INTO TARGET;\nSET IDENTITY OFF;', {
+    ...mssqlSplitterOptions,
+    allowSemicolon: true,
+  });
+  expect(output).toEqual(['SET IDENTITY ON;', 'MERGE INTO TARGET;', 'SET IDENTITY OFF;']);
 });
 
 test('prevent single line split - mysql', () => {
@@ -104,10 +112,10 @@ test('adaptive go split -mssql', () => {
     }
   );
   expect(output).toEqual([
-    'SELECT 1',
+    'SELECT 1;',
     'CREATE PROCEDURE p1 AS BEGIN SELECT 2;SELECT 3;END',
-    'SELECT 4',
-    'SELECT 5',
+    'SELECT 4;',
+    'SELECT 5;',
     'ALTER PROCEDURE p1 AS BEGIN SELECT 2;SELECT 3;END',
   ]);
 });
@@ -376,4 +384,3 @@ END`;
   expect(output.length).toBe(1);
   expect(output[0]).toEqual(input);
 });
-

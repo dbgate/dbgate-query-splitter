@@ -635,9 +635,14 @@ export function splitQueryLine(context: SplitLineContext) {
           context.wasDataOnLine = true;
           break;
         }
-        pushQuery(context);
+        if (context.options.keepSemicolonInCommands && context.currentDelimiter === SEMICOLON) {
+          movePosition(context, 1, false);
+          pushQuery(context);
+        } else {
+          pushQuery(context);
+          movePosition(context, token.length, false);
+        }
         context.commandPart = '';
-        movePosition(context, token.length, false);
         context.currentCommandStart = context.position;
         markStartCommand(context);
         context.isCopyFromStdinCandidate = false;
