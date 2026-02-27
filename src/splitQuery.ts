@@ -6,6 +6,10 @@ const BEGIN_EXTRA_KEYWORDS_REGEX = new RegExp(`^(?:${BEGIN_EXTRA_KEYWORDS.join('
 const END_EXTRA_KEYWORDS = ['TRANSACTION', 'IF'];
 const END_EXTRA_KEYWORDS_REGEX = new RegExp(`^(?:${END_EXTRA_KEYWORDS.join('|')})`, 'i');
 
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 type SplitterSpecialMarkerType = 'copy_stdin_start' | 'copy_stdin_end' | 'copy_stdin_line';
 export interface SplitStreamContext {
   options: SplitterOptions;
@@ -283,7 +287,22 @@ export function scanToken(context: ScannerContext): Token {
     }
   }
 
+  if (context.options.allowCustomSetTerm) {
+    // Firebird: SET TERM ^ ;
+    // The command ends with the current delimiter
+    const firebirdPattern = new RegExp(`^SET[ \\t]+TERM[ \\t]+(\\S+)[ \\t]*${escapeRegExp(context.currentDelimiter || SEMICOLON)}`, 'i');
+    const firebirdMatch = s.slice(pos).match(firebirdPattern);
+    if (firebirdMatch) {
+      return {
+        type: 'set_sqlterminator',
+        value: firebirdMatch[1],
+        length: firebirdMatch[0].length,
+      };
+    }
+  }
+
   if (context.options.allowCustomSqlTerminator) {
+    // Oracle: SET SQLTERMINATOR "."
     const m = s.slice(pos).match(/^SET[ \t]+SQLT(ERMINATOR)?[ \t]+(ON|OFF|".")/i);
     if (m) {
       if (m[2].toUpperCase() == 'OFF') {

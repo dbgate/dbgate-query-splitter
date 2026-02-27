@@ -384,3 +384,63 @@ END`;
   expect(output.length).toBe(1);
   expect(output[0]).toEqual(input);
 });
+
+test('Firebird - SET TERM with trigger', () => {
+  const input = `set term ^;
+alter trigger ZAK_ROZPISKY_AU
+as
+declare xpocet                    integer;
+declare xtermin_vykres            timestamp;
+BEGIN
+  SELECT 1 FROM TABLE1;
+END^
+set term ;^
+SELECT * FROM TABLE2`;
+  const output = splitQuery(input, firebirdSplitterOptions);
+
+  expect(output.length).toBe(2);
+  expect(output[0]).toMatch(/alter trigger/i);
+  expect(output[0]).toMatch(/SELECT 1 FROM TABLE1/);
+  expect(output[1]).toEqual('SELECT * FROM TABLE2');
+});
+
+test('Firebird - SET TERM with procedure', () => {
+  const input = `SET TERM ^ ;
+CREATE PROCEDURE test_proc
+AS
+BEGIN
+  SELECT 1;
+  SELECT 2;
+END^
+SET TERM ; ^
+SELECT 3;`;
+  const output = splitQuery(input, firebirdSplitterOptions);
+
+  expect(output.length).toBe(2);
+  expect(output[0]).toMatch(/CREATE PROCEDURE/);
+  expect(output[0]).toMatch(/SELECT 1/);
+  expect(output[0]).toMatch(/SELECT 2/);
+  expect(output[1]).toEqual('SELECT 3');
+});
+
+test('Firebird - SET TERM with multiple procedures', () => {
+  const input = `SET TERM ^ ;
+CREATE PROCEDURE proc1
+AS
+BEGIN
+  SELECT 1;
+END^
+CREATE PROCEDURE proc2
+AS
+BEGIN
+  SELECT 2;
+END^
+SET TERM ; ^`;
+  const output = splitQuery(input, firebirdSplitterOptions);
+
+  expect(output.length).toBe(2);
+  expect(output[0]).toMatch(/proc1/);
+  expect(output[0]).toMatch(/SELECT 1/);
+  expect(output[1]).toMatch(/proc2/);
+  expect(output[1]).toMatch(/SELECT 2/);
+});

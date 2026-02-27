@@ -8,6 +8,7 @@ export interface SplitterOptions {
   allowSemicolon: boolean;
   allowCustomDelimiter: boolean;
   allowCustomSqlTerminator: boolean;
+  allowCustomSetTerm: boolean;
   allowGoDelimiter: boolean;
   allowSlashDelimiter: boolean;
   allowDollarDollarString: boolean;
@@ -41,6 +42,7 @@ export const defaultSplitterOptions: SplitterOptions = {
   allowSemicolon: true,
   allowCustomDelimiter: false,
   allowCustomSqlTerminator: false,
+  allowCustomSetTerm: false,
   allowGoDelimiter: false,
   allowSlashDelimiter: false,
   allowDollarDollarString: false,
@@ -136,6 +138,7 @@ export const oracleSplitterOptions: SplitterOptions = {
 export const firebirdSplitterOptions: SplitterOptions = {
   ...defaultSplitterOptions,
 
+  allowCustomSetTerm: true,
   skipSeparatorBeginEnd: true,
   queryParameterStyle: ':', // Firebird uses colon-prefixed parameters (:param_name)
 };
